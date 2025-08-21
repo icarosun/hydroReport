@@ -182,6 +182,41 @@ def update_all_station(cod_station, link):
     except Exception as e:
         print(f"❌ Erro ao processar {cod_station}: {e}")
 
+def generate_report():
+    conn = conect_database()
+    cursor = conn.cursor()
+
+    cursor.execute("SELECT * FROM watershed")
+
+    all_watersheds = cursor.fetchall()
+
+    text = ""
+
+    for watershed in all_watersheds:
+        text += "-"*50
+        text += "\n"
+        text += f"🌊 {watershed[1]} 🌊\n"
+        text += "-"*50
+        text += "\n"
+
+        cursor.execute("SELECT * FROM station WHERE watershed_id = ?", (watershed[0],))
+
+        stations_from_hydro = cursor.fetchall()
+
+        for station in stations_from_hydro:
+            text += f'''
+📍({station[2]}) - **{station[3]}**
+├ Cota Atual: {station[4]} m
+├ Cota Anterior: {station[6]} m
+├ Variação Diária: ▼ -4 cm
+├ Máximo Histórico: {station[8]} m ({station[9]})
+├ Mínimo Histórico: {station[10]} m ({station[11]})
+├ Diferença para Extremo (Mínima): 15.26 m
+└ Última Atualização: {station[5]}\n'''
+
+    print(text)
+    conn.close()
+
 def main():
     init_db()
 
@@ -196,6 +231,7 @@ def main():
     for station, url in stations.items():
         update_all_station(station, url)
 
+    generate_report()
 
 if __name__ == "__main__":
     main()
